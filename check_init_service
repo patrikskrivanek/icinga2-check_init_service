@@ -1,0 +1,79 @@
+#!/bin/bash
+
+VERSION='v1.0.0'
+RELEASE_DATE='2019-08-09'
+
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRITICAL=2
+STATE_UNKNOWN=3
+
+PROGRAM=`basename "$0"`
+
+print_help() {
+    echo -n "This plugin checks status of init service.
+Returns exit codes based on nagios plugin api standard.
+
+Usage:
+    $PROGRAM [OPTION]
+
+Options:
+    [service]           Name of init service for check
+    -V, --version       Current version of plugin
+    -h, --help          Plugin help and usage
+
+Examples:
+    $PROGRAM apache2
+    $PROGRAM cron
+    $PROGRAM mysql
+    $PROGRAM -V
+    $PROGRAM --help
+
+version: $VERSION
+release: $RELEASE_DATE
+"
+
+    exit $STATE_OK
+}
+
+if [ -z "$1" ]; then
+    print_help
+    exit $STATE_OK
+fi
+
+SERVICE="/etc/init.d/$1"
+case "$1" in
+    --help)
+        print_help
+        exit $STATE_OK
+        ;;
+    -h)
+        print_help
+        exit $STATE_OK
+        ;;
+    --version)
+        echo $VERSION
+        exit $STATE_OK
+        ;;
+    -V)
+        echo $VERSION
+        exit $STATE_OK
+        ;;
+    *)
+        if [ -f "$SERVICE" ]; then
+            $SERVICE status
+            ret=$?
+            case "$ret" in
+                0)
+                    exit $ret
+                    ;;
+                *)
+                    exit $STATE_CRITICAL
+                    ;;
+            esac
+        else
+            echo "ERROR: No service name in /etc/init.d/$1"
+            exit $STATE_UNKNOWN
+        fi
+        ;;
+esac
